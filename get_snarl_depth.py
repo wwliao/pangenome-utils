@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import re
 import argparse
 from functools import partial
@@ -15,14 +15,12 @@ def reverse_path(path):
 def search_allele(aln, pattern):
     m = pattern.search(aln)
     if m is not None:
-        allele = m[0]
-        return allele
+        return m[0]
     else:
         rev_aln = reverse_path(aln)
         m = pattern.search(rev_aln)
         if m is not None:
-            allele = m[0]
-            return allele
+            return m[0]
     return None
 
 parser = argparse.ArgumentParser()
@@ -37,7 +35,7 @@ with open(args.gaffile) as infile:
         alns.append(line.strip().split("\t")[5])
 
 with open(f"{args.snarls}.depth.txt", "w") as outfile:
-    #outfile.write(line + "From_Node\tTo_Node\tLevel\tParent_Snarl\tAllele\tRead_Depth\n")
+    #outfile.write("Source_Node\tSink_Node\tLevel\tParent_Snarl\tAllele\tRead_Depth\n")
     with open(args.snarls) as infile:
         for line in infile:
             line = line.strip()
