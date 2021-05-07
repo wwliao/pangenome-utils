@@ -15,13 +15,12 @@ with open(args.gfafile) as infile, open(f"{prefix}.labels.csv", "w") as outfile:
     outfile.write("Node,Color\n")
     pattern = re.compile("^S\t(\S+)\t(\S+)(\t.*)*")
     for line in infile:
+        color = "#BEBEBE"
         m = pattern.search(line)
         if m:
             node = m[1]
             tags = m[3]
             if tags:
-                m = re.search(f"\tSR:i:{args.rank}", tags)
-                if m:
-                    outfile.write(f"{node},{args.color}\n")
-                else:
-                    outfile.write(f"{node},#BEBEBE\n")
+                if re.search(f"\tSR:i:{args.rank}", tags):
+                    color = args.color
+            outfile.write(f"{node},{color}\n")
