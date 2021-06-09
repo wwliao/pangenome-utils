@@ -4,6 +4,57 @@ import argparse
 from collections import defaultdict
 from os.path import basename, splitext
 
+def revcomp(seq):
+    return seq.translate(str.maketrans('ACGTacgtRYMKrymkVBHDvbhd', 'TGCAtgcaYRKMyrkmBVDHbvdh'))[::-1]
+
+def cvt2stable(pri, traversal):
+    if traversal != "*":
+        a = []
+        for m in re.finditer("([><])([^\s><]+)", traversal):
+            if m:
+                dir = m[1]
+                seg = m[2]
+                if seg not in pri:
+                    if dir == ">":
+                        seq = nonpri_seq[seg]
+                    else:
+                        seq = revcomp(nonpri_seq[seg])
+                    add_new = True
+                    if len(a) > 0:
+                        b = a[-1]
+                        if len(b) == 2:
+                            b[1] += seq
+                            add_new = False
+                    if add_new:
+                        a.append(["+", seq])
+                else:
+                    h = pri[seg]
+                    add_new = True
+                    if len(a) > 0:
+                        b = a[-1]
+                        if len(b) == 4:
+                            if b[0] == dir and h[0] == b[1]:
+                                if b[0] == ">":
+                                    if h[1] == b[3]:
+                                        b[3] = h[2]
+                                        add_new = False
+                                else:
+                                    if h[2] == b[2]:
+                                        b[2] = h[1]
+                                        add_new = False
+
+                    if add_new:
+                        a.append([dir, h[0], h[1], h[2]])
+        stable = []
+        for i in range(len(a)):
+            if len(a[i]) != 4:
+                stable.append("".join(a[i]))
+            else:
+                stable.append(a[i][0] + a[i][1] + ':' + str(a[i][2]) + '-' + str(a[i][3]))
+        return "".join(stable)
+    else:
+        return "*"
+
 parser = argparse.ArgumentParser()
 parser.add_argument("gfa")
 parser.add_argument("dipbedpe")
@@ -43,50 +94,6 @@ with open(args.gfa) as infile:
                 seq = cols[2]
                 nonpri_seq[seg] = seq
 
-def revcomp(seq):
-    return seq.translate(str.maketrans('ACGTacgtRYMKrymkVBHDvbhd', 'TGCAtgcaYRKMyrkmBVDHbvdh'))[::-1]
-
-def cvt2stable(pri, traversal):
-    if traversal != "*":
-        a = []
-        for m in re.finditer("([><])([^\s><]+)", traversal):
-            if m:
-                dir = m[1]
-                seg = m[2]
-                if seg not in pri:
-                    #a.append([dir, seg])
-                    #a.append([dir, nonpri_seq[seg]])
-                    if dir == ">":
-                        a.append([">", nonpri_seq[seg]])
-                    else:
-                        a.append([">", revcomp(nonpri_seq[seg])])
-                else:
-                    h = pri[seg]
-                    add_new = True
-                    if len(a) > 0:
-                        b = a[-1]
-                        if len(b) == 4:
-                            if b[0] == dir and h[0] == b[1]:
-                                if b[0] == ">":
-                                    if h[1] == b[3]:
-                                        b[3] = h[2]
-                                        add_new = False
-                                else:
-                                    if h[2] == b[2]:
-                                        b[2] = h[1]
-                                        add_new = False
-                    if add_new:
-                        a.append([dir, h[0], h[1], h[2]])
-        stable = []
-        for i in range(len(a)):
-            if len(a[i]) != 4:
-                stable.append("".join(a[i]))
-            else:
-                stable.append(a[i][0] + a[i][1] + ':' + str(a[i][2]) + '-' + str(a[i][3]))
-        return "".join(stable)
-    else:
-        return "*"
-
 root, ext = splitext(basename(args.dipbedpe))
 with open(args.dipbedpe) as infile, open(f"{root}.dip_stable{ext}", "w") as outfile:
     for i, line in enumerate(infile):
@@ -98,26 +105,11 @@ with open(args.dipbedpe) as infile, open(f"{root}.dip_stable{ext}", "w") as outf
         else:
             outfile.write("\t".join(cols[:9]))
             ref = cols[7]
-            """
-            m = re.search("([><][^\s><]+)([><][^\s><]+)", cols[6])
-            source = m[1]
-            sink = m[2]
-            if ref != "*":
-                ref = source + ref + sink
-            else:
-                ref = source + sink
-            """
             stable_ref = cvt2stable(pri, ref)
             outfile.write(f"\t{stable_ref}")
             stable_alts = []
             alts = cols[8].split(",")
             for alt in alts:
-                """
-                if alt != "*":
-                    alt = source + alt + sink
-                else:
-                    alt = source + sink
-                """
                 stable_alts.append(cvt2stable(pri, alt))
             stable_alt_str = ",".join(stable_alts)
             outfile.write(f"\t{stable_alt_str}\t")
