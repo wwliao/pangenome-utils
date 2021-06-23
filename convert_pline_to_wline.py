@@ -20,7 +20,7 @@ with open(args.gfafile) as infile, open(f"{root}.p2w{ext}", "w") as outfile:
             node = cols[1]
             size = len(cols[2])
             node_size[node] = size
-        if line.startswith("P"):
+        elif line.startswith("P"):
             cols = line.strip().split("\t")
             pid = cols[1]
             if pid.startswith(args.path_prefix):
