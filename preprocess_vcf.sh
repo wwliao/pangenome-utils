@@ -12,7 +12,7 @@ MEM="10G"
 bcftools view -a -s ${SAMPLE} -Ou ${VCF} \
     | bcftools norm -f ${REF} -c s -m - -Ou \
     | bcftools view -e 'GT="ref" | GT~"\."' -f 'PASS,.' -Ou \
-    | bcftools sort -m ${MEM} -T sort_tmp/ -Ou \
+    | bcftools sort -m ${MEM} -T ${SAMPLE}.${PREFIX}_sort_tmp/ -Ou \
     | bcftools norm -d exact -Oz -o ${PREFIX}.norm.vcf.gz \
     && bcftools index -t ${PREFIX}.norm.vcf.gz \
     && bcftools view -e "STRLEN(REF)>${MAXSIZE} | STRLEN(ALT)>${MAXSIZE}" \
