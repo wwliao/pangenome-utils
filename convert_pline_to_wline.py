@@ -30,11 +30,12 @@ with open(args.gfafile) as infile, open(f"{root}.p2w{ext}", "w") as outfile:
                     sample, contig = pid.split("#")
                     sample = sample.upper()
                     hap = "0"
-                elif len(pid.split("#")) == 3:
-                    sample, hap, contig = pid.split("#")
+                elif len(pid.split("#")) >= 3:
+                    sample, hap, contig = pid.split("#")[:3]
                 else:
                     print(f"{pid}: Path name format is not correct!")
                     break
+
 
                 start = path_size[pid]
                 wline = ""
